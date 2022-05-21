@@ -22,6 +22,7 @@ ADCharacter::ADCharacter()
 	SpringArmComponent = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArmComponent"));
 	SpringArmComponent->SetupAttachment(CameraHelperComponent);
 	SpringArmComponent->SetRelativeRotation(FRotator(0.f, 10.f, 90.f)); // Camera rotated so moving forward moves us right
+	SpringArmComponent->TargetArmLength = 800.f;
 	SpringArmComponent->bUsePawnControlRotation = false;
 	SpringArmComponent->bInheritPitch = false;
 	SpringArmComponent->bInheritRoll = false;
@@ -37,9 +38,9 @@ ADCharacter::ADCharacter()
 	FacingRightCamOffset = 500.f;
 	FacingLeftCamOffset = 500.f;
 
-	// lock the Y plane so we cant run into the wilds
-	GetCharacterMovement()->SetPlaneConstraintEnabled(true);
-	GetCharacterMovement()->SetPlaneConstraintFromVectors(FVector(1.f, 0.f, 0.f), FVector(0.f, 0.f, 1.f));
+	// lock the Y plane so we can only run right and left
+	GetCharacterMovement()->SetPlaneConstraintEnabled(true);	
+	GetCharacterMovement()->SetPlaneConstraintNormal(FVector(0.f, 1.f, 0.f));
 }
 
 
