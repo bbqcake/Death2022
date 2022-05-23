@@ -22,6 +22,10 @@ public:
 	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	virtual void Jump() override;
+	virtual void StopJumping() override;
+	void StopTestJump();
+
 protected:	
 	virtual void BeginPlay() override;
 
@@ -34,7 +38,7 @@ protected:
 	USpringArmComponent* SpringArmComponent;
 	/* Show more of right or left of screen depending on what way the player is facing/moving */
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Camera")
-	USceneComponent* CameraHelperComponent;
+	USceneComponent* CameraHelperComponent;	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	float FacingRightCamOffset;
