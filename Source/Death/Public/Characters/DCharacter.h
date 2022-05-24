@@ -24,12 +24,13 @@ public:
 
 	virtual void Jump() override;
 	virtual void StopJumping() override;
-	void StopTestJump();
+	//void StopTestJump(float DeltaTime);
 
 protected:	
 	virtual void BeginPlay() override;
-
 	void MoveForward(float Value);
+	
+	
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category="Camera")
 	UCameraComponent* CameraComponent;
@@ -52,6 +53,20 @@ private:
 
 	FVector2D GetViewportSize();
 	//void AdjustCamera();
+
+	//  ending the jump early
+	void CalculateJumpEndGravity(float DeltaTime);
+	bool bJumpEndedEarly;	
+	bool bJumpCalculationDone;
+	bool bInitialJumpCalc;	
+	float ZVelocityJump;	
+	UPROPERTY(EditAnywhere)
+	float JumpInterpSpeed;
+	
+	// Jump buffering . come back to this if time allows it to
+	void JumpBuffer();
+	bool bHangTimeJump;
+	FTimerHandle JumpBufferTime;
 	
 	
 

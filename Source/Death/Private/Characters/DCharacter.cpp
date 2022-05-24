@@ -2,13 +2,13 @@
 
 
 #include "Characters/DCharacter.h"
-
-#include <cwchar>
-
+#include "DrawDebugHelpers.h"
 #include "Camera/CameraComponent.h"
+#include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/PrimitiveComponent.h"
+#include "Engine/EngineTypes.h"
 #include "Kismet/GameplayStatics.h"
 
 
@@ -68,7 +68,12 @@ ADCharacter::ADCharacter()
 	GetCharacterMovement()->AirControlBoostVelocityThreshold = 900000000000000000000000000.f;
 	
 	GetCharacterMovement()->bUseSeparateBrakingFriction = true;	
-	
+	bJumpCalculationDone = false;
+	bInitialJumpCalc = true;
+	ZVelocityJump = 0.f;
+	JumpInterpSpeed = 100.f;
+	// jump for a tiny amount after running of an edge
+	bHangTimeJump = true;
 	
 }
 
@@ -86,6 +91,14 @@ void ADCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
+	//DrawDebugSphere(GetWorld(), GetActorLocation(), 10.f, 4.f, FColor::Red, false, 5.f, 0.f, 4.f);
+	DrawDebugBox(GetWorld(), GetActorLocation(),  FVector(4.f, 4.f, 4.f), GetActorRotation().Quaternion(), FColor::Red, false, 4.f, 0, 2.f);
+
+	if (bJumpEndedEarly)
+	{
+		CalculateJumpEndGravity(DeltaTime);
+		//UE_LOG(LogTemp, Warning, TEXT("Velocity.Z: %f"), ZVelocityJump);
+	}	
 }
 
 
@@ -95,6 +108,7 @@ void ADCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &ADCharacter::MoveForward);
 
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &ADCharacter::Jump);
+	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Pressed, this, &ADCharacter::JumpBuffer);
 	PlayerInputComponent->BindAction(TEXT("Jump"), EInputEvent::IE_Released, this, &ADCharacter::StopJumping);
 	
 }
@@ -106,22 +120,15 @@ void ADCharacter::Jump()
 }
 
 void ADCharacter::StopJumping()
-{
-	Super::StopJumping();
-	FVector Velocity = GetCharacterMovement()->GetLastUpdateVelocity();	
-	//NotifyJumpApex(); // Doesn't do anything ? I'm leaving it here because I can
-	
+{	
+	FVector Velocity = GetCharacterMovement()->GetLastUpdateVelocity();		
 	
 	if (Velocity.Z > 0.f)
-	{		
-		UE_LOG(LogTemp, Warning, TEXT("Stop our jump now!"));
+	{
+		bJumpEndedEarly = true;
 	}
-		
-}
 
-void ADCharacter::StopTestJump()
-{
-	UE_LOG(LogTemp, Warning, TEXT("Stop our test jump now!"));
+	Super::StopJumping();		
 }
 
 void ADCharacter::MoveForward(float Value)
@@ -137,4 +144,38 @@ FVector2D ADCharacter::GetViewportSize()
 	}
 	
 	return ViewportSize;
+}
+
+// revisit if time permits
+void ADCharacter::CalculateJumpEndGravity(float DeltaTime)
+{	
+	if (!GetCharacterMovement()->IsFalling())
+	{
+		bJumpEndedEarly = false;
+		bJumpCalculationDone = true;
+		bInitialJumpCalc = true;
+		return;
+	}
+
+	if (bInitialJumpCalc)
+	{
+		ZVelocityJump = GetCharacterMovement()->Velocity.Z;
+		bInitialJumpCalc = false;
+	}	
+	
+	ZVelocityJump = FMath::FInterpTo(ZVelocityJump, -4000.f, DeltaTime, JumpInterpSpeed);
+	GetCharacterMovement()->Velocity.Z = ZVelocityJump;
+	//UE_LOG(LogTemp, Warning, TEXT("Character.Z: %f"), GetCharacterMovement()->Velocity.Z);
+	
+	if (GetCharacterMovement()->Velocity.Z <= -4000.f)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("We are done calculating"));
+		bJumpCalculationDone = true;
+		bInitialJumpCalc = true;		
+	}	
+}
+
+void ADCharacter::JumpBuffer()
+{
+	
 }
